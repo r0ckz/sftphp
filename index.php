@@ -19,7 +19,8 @@ if (!$sftp->login($_GET['user'], $_GET['pass'])) {
 
 if(!isset($_GET['dir'])){ $_GET['dir'] = ''; } // Set dir variable (empty) if not set, to prevent script errors. This will default to '/'.
 $_SERVER['REQUEST_URI'] = str_replace('%20', ' ', $_SERVER['REQUEST_URI']); // Replace the %20 from URL in REQUEST_URI if folder name contains spaces, to prevent problems with links in these folders.
-$urlwithoutdir = str_replace('&dir='.$_GET["dir"], '', $_SERVER['REQUEST_URI']); // We strip the dir from the url for later use to navigate to other dirs (back and forth).
+$urlwithoutdir = str_replace('&dir='.$_GET['dir'], '', $_SERVER['REQUEST_URI']); // We strip the dir from the url for later use to navigate to other dirs (back and forth).
+if($_GET['dir'] == '/'){ $_GET['dir'] = ''; } // Easy one-line solution to solve issues with '&dir=/', given that phpseclib defaults an unspecified path to '/'. We could change empty dir vars to '/' by default instead, but with the existing code that would mean the first '/' needs to be filtered out of the URLs and ONLY on the root page (because filenames aren't returned with a starting slash). Without that, it messes up the URLs and some other stuff. Easy to do but an unnecessary mess with "ifs" we don't strictly need, for getting the same result.
 
 // Page start
 echo '<html>
@@ -41,7 +42,7 @@ foreach($sftp->rawlist($_GET['dir']) as $filename => $file) {
         echo '<tr><td><a href="sftp://'.$_GET['user'].':'.$_GET['pass'].'@'.$_GET['ip'].':'.$_GET['port'].$_GET['dir'].'/'.$filename.'">' . $filename . '</a></td><td>' .$file['size'].'</td><td>'.date('d-m-Y H:i:s', $file['mtime']).'</td>';
     }
     if ($file['type'] == NET_SFTP_TYPE_DIRECTORY && $filename !== '.' && $filename !== '..') { // Directory? Link to browse, show filename and modified date. Hide . and .. because these aren't real folders and we already have a backlink to the previous folder (links to . and .. don't go back).
-        echo '<tr><td><a href="'.$urlwithoutdir.'&dir='.$_GET["dir"].'/'.$filename.'">' . $filename . '</a></td><td>-</td><td>'.date('d-m-Y H:i:s', $file['mtime']).'</td>';
+        echo '<tr><td><a href="'.$urlwithoutdir.'&dir='.$_GET['dir'].'/'.$filename.'">' . $filename . '</a></td><td>-</td><td>'.date('d-m-Y H:i:s', $file['mtime']).'</td>';
     }
 }
 } else { echo '<td colspan="3">Directory not found.</th>'; }
